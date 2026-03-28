@@ -170,7 +170,7 @@ void LEDWidget::DoSet(void)
     {
         if (mStrip)
         {
-            HsvColor_t hsv = { (uint16_t)(mHue*360/255), (uint8_t)(mSaturation*100/255), brightness };
+            HsvColor_t hsv = { static_cast<uint8_t>((uint16_t)mHue*360/255), (uint8_t)(mSaturation*100/255), brightness };
             RgbColor_t rgb = HsvToRgb(hsv);
 // #if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
 //             ESP_LOGI(TAG, "DoSet to GPIO number %d, %d:%d:%d", mGPIONum, rgb.r, rgb.g, rgb.b);
