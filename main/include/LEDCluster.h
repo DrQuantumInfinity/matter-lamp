@@ -20,13 +20,9 @@
 #include "driver/gpio.h"
 #include "esp_log.h"
 
-#if CONFIG_LED_TYPE_RMT
-#include "driver/rmt.h"
 #include "led_strip.h"
-#else
 #include "driver/ledc.h"
 #include "hal/ledc_types.h"
-#endif
 #include <vector>
 #include "LEDWidget.h"
 

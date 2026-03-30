@@ -38,7 +38,7 @@ void LEDCluster::Init(uint8_t * gpios, float * temps, uint8_t size, uint8_t colo
         ESP_LOGI(TAG, "Temp: %1.2f", temps[ledIndex]);
     }
     ESP_LOGI(TAG, "Done creating");
-    mColorLed.InitColor((gpio_num_t) colorGpio, (rmt_channel_t) 0);
+    mColorLed.InitColor((gpio_num_t) colorGpio);
     mMode = Mode_Mono;
     // for (int ledIndex = 0; ledIndex < mLeds.size(); ledIndex++)
     // {

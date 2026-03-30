@@ -29,6 +29,7 @@
 #include "esp_spi_flash.h"
 #endif
 #include "esp_system.h"
+#include "esp_wifi.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "nvs_flash.h"
@@ -161,6 +162,8 @@ extern "C" void app_main()
         ESP_LOGE(TAG, "Failed to initialize WiFi stack");
         return;
     }
+    // Disable WiFi power save for reliable Matter mDNS
+    esp_wifi_set_ps(WIFI_PS_NONE);
 #endif // CHIP_DEVICE_CONFIG_ENABLE_WIFI
 
     DeviceLayer::SetDeviceInfoProvider(&gExampleDeviceInfoProvider);

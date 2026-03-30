@@ -20,7 +20,6 @@
 #include "driver/gpio.h"
 #include "esp_log.h"
 
-#include "driver/rmt.h"
 #include "led_strip.h"
 #include "driver/ledc.h"
 #include "hal/ledc_types.h"
@@ -28,7 +27,7 @@
 class LEDWidget
 {
 public:
-    void InitColor(gpio_num_t pin, rmt_channel_t rmtChannel);
+    void InitColor(gpio_num_t pin);
     void InitMono(gpio_num_t pin, ledc_channel_t ledcChannel);
     void Set(bool state);
     void Toggle(void);
@@ -40,7 +39,7 @@ public:
     bool IsTurnedOn(void);
 
 private:
-    void Init(bool color, gpio_num_t pin, rmt_channel_t rmtChannel, ledc_channel_t ledcChannel);
+    void Init(bool color, gpio_num_t pin, ledc_channel_t ledcChannel);
     bool mState;
     uint8_t mBrightness;
     uint64_t mTurnOnTimeMs;
@@ -49,11 +48,7 @@ private:
 
     uint8_t mHue;
     uint8_t mSaturation;
-// #if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
-//     led_strip_handle_t mStrip;
-// #else
-    led_strip_t * mStrip;
-// #endif
+    led_strip_handle_t mStrip;
     gpio_num_t mGPIONum;
     ledc_channel_t mLedcChannel;
 

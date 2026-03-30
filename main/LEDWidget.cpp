@@ -22,42 +22,35 @@
 
 static const char * TAG = "LEDWidget";
 
-void LEDWidget::InitColor(gpio_num_t pin, rmt_channel_t rmtChannel)
+void LEDWidget::InitColor(gpio_num_t pin)
 {
-    Init(true, pin, rmtChannel, (ledc_channel_t)0);
+    Init(true, pin, (ledc_channel_t)0);
 }
 void LEDWidget::InitMono(gpio_num_t pin, ledc_channel_t ledcChannel)
 {
-    Init(false, pin, (rmt_channel_t)0, ledcChannel);
+    Init(false, pin, ledcChannel);
 }
 
-void LEDWidget::Init(bool color, gpio_num_t pin, rmt_channel_t rmtChannel, ledc_channel_t ledcChannel)
+void LEDWidget::Init(bool color, gpio_num_t pin, ledc_channel_t ledcChannel)
 {
     mState      = false;
     mBrightness = UINT8_MAX;
     mColor = color;
     mGPIONum = pin;
     mLedcChannel = ledcChannel;
+    mStrip = nullptr;
 
     if (color)
     {
-// #if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
-//         led_strip_config_t strip_config = {
-//             .strip_gpio_num = mGPIONum,
-//             .max_leds       = 1,
-//         };
+        led_strip_config_t strip_config = {};
+        strip_config.strip_gpio_num = mGPIONum;
+        strip_config.max_leds       = 1;
 
-//         led_strip_new_rmt_device(&strip_config, &mStrip);
-// #else
-        rmt_config_t config             = RMT_DEFAULT_CONFIG_TX(mGPIONum, (rmt_channel_t)rmtChannel);
-        led_strip_config_t strip_config = LED_STRIP_DEFAULT_CONFIG(1, (led_strip_dev_t) config.channel);
+        led_strip_rmt_config_t rmt_config = {};
+        rmt_config.resolution_hz = 10 * 1000 * 1000; // 10 MHz
 
-        config.clk_div = 2;
-        rmt_config(&config);
-        rmt_driver_install(config.channel, 0, 0);
+        ESP_ERROR_CHECK(led_strip_new_rmt_device(&strip_config, &rmt_config, &mStrip));
 
-        mStrip = led_strip_new_rmt_ws2812(&strip_config);
-// #endif
         mHue        = 90;
         mSaturation = 255;
         mBrightness = 10;
@@ -117,7 +110,7 @@ void LEDWidget::SetBrightness(uint8_t brightness)
     if (brightness == mBrightness)
         return;
 
-    if (brightness != 1 || 
+    if (brightness != 1 ||
         esp_timer_get_time() - mTurnOnTimeMs > 500*1000)
     {
         mBrightness = brightness;
@@ -172,15 +165,9 @@ void LEDWidget::DoSet(void)
         {
             HsvColor_t hsv = { static_cast<uint8_t>((uint16_t)mHue*360/255), (uint8_t)(mSaturation*100/255), brightness };
             RgbColor_t rgb = HsvToRgb(hsv);
-// #if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
-//             ESP_LOGI(TAG, "DoSet to GPIO number %d, %d:%d:%d", mGPIONum, rgb.r, rgb.g, rgb.b);
-//             led_strip_set_pixel(mStrip, 0, rgb.r, rgb.g, rgb.b);
-//             led_strip_refresh(mStrip);
-// #else
-            ESP_LOGI(TAG, "DoSet to GPIO number %d, old %d:%d:%d", mGPIONum, rgb.r, rgb.g, rgb.b);
-            mStrip->set_pixel(mStrip, 0, rgb.r, rgb.g, rgb.b);
-            mStrip->refresh(mStrip, 100);
-// #endif
+            ESP_LOGI(TAG, "DoSet to GPIO number %d, %d:%d:%d", mGPIONum, rgb.r, rgb.g, rgb.b);
+            led_strip_set_pixel(mStrip, 0, rgb.r, rgb.g, rgb.b);
+            led_strip_refresh(mStrip);
         }
     }
     else

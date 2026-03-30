@@ -45,3 +45,7 @@
  *
  */
 #define CHIP_IM_MAX_NUM_SUBSCRIPTIONS 45
+
+// Software version for OTA — bump this for each new firmware build
+#define CHIP_DEVICE_CONFIG_DEVICE_SOFTWARE_VERSION 2
+#define CHIP_DEVICE_CONFIG_DEVICE_SOFTWARE_VERSION_STRING "2.0"
