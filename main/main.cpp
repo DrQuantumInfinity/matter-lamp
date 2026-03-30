@@ -16,6 +16,7 @@
  */
 
 #include "DeviceCallbacks.h"
+#include "WebServer.h"
 
 #include "AppTask.h"
 #include <common/CHIPDeviceManager.h>
@@ -114,6 +115,8 @@ static void InitServer(intptr_t context)
 
     DeviceCallbacksDelegate::Instance().SetAppDelegate(&sAppDeviceCallbacksDelegate);
     Esp32AppServer::Init(); // Init ZCL Data Model and CHIP App Server AND Initialize device attestation config
+
+    WebServerStart();
 }
 
 extern "C" void app_main()
