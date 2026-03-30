@@ -39,6 +39,7 @@
 #include <app/server/Server.h>
 #include <app-common/zap-generated/attributes/Accessors.h>
 #include <platform/CHIPDeviceLayer.h>
+#include <platform/PlatformManager.h>
 
 static const char * TAG = "web-server";
 static httpd_handle_t sServer = nullptr;
@@ -124,16 +125,19 @@ static esp_err_t api_light_get_handler(httpd_req_t * req)
     uint8_t hue = 0;
     uint8_t saturation = 0;
 
-    OnOff::Attributes::OnOff::Get(1, &onOff);
     {
-        chip::app::DataModel::Nullable<uint8_t> nullableLevel;
-        LevelControl::Attributes::CurrentLevel::Get(1, nullableLevel);
-        if (!nullableLevel.IsNull()) level = nullableLevel.Value();
+        chip::DeviceLayer::StackLock lock;
+        OnOff::Attributes::OnOff::Get(1, &onOff);
+        {
+            chip::app::DataModel::Nullable<uint8_t> nullableLevel;
+            LevelControl::Attributes::CurrentLevel::Get(1, nullableLevel);
+            if (!nullableLevel.IsNull()) level = nullableLevel.Value();
+        }
+        ColorControl::Attributes::ColorTemperatureMireds::Get(1, &colorTemp);
+        ColorControl::Attributes::ColorMode::Get(1, &colorMode);
+        ColorControl::Attributes::CurrentHue::Get(1, &hue);
+        ColorControl::Attributes::CurrentSaturation::Get(1, &saturation);
     }
-    ColorControl::Attributes::ColorTemperatureMireds::Get(1, &colorTemp);
-    ColorControl::Attributes::ColorMode::Get(1, &colorMode);
-    ColorControl::Attributes::CurrentHue::Get(1, &hue);
-    ColorControl::Attributes::CurrentSaturation::Get(1, &saturation);
 
     char buf[256];
     snprintf(buf, sizeof(buf),
@@ -186,24 +190,28 @@ static esp_err_t api_light_put_handler(httpd_req_t * req)
     bool on;
     int brightness, color_temp, hue, saturation;
 
-    if (json_get_bool(buf, "on", &on))
-        OnOff::Attributes::OnOff::Set(1, on);
-
-    if (json_get_int(buf, "brightness", &brightness))
     {
-        chip::app::DataModel::Nullable<uint8_t> val;
-        val.SetNonNull((uint8_t)brightness);
-        LevelControl::Attributes::CurrentLevel::Set(1, val);
+        chip::DeviceLayer::StackLock lock;
+
+        if (json_get_bool(buf, "on", &on))
+            OnOff::Attributes::OnOff::Set(1, on);
+
+        if (json_get_int(buf, "brightness", &brightness))
+        {
+            chip::app::DataModel::Nullable<uint8_t> val;
+            val.SetNonNull((uint8_t)brightness);
+            LevelControl::Attributes::CurrentLevel::Set(1, val);
+        }
+
+        if (json_get_int(buf, "color_temp", &color_temp))
+            ColorControl::Attributes::ColorTemperatureMireds::Set(1, (uint16_t)color_temp);
+
+        if (json_get_int(buf, "hue", &hue))
+            ColorControl::Attributes::CurrentHue::Set(1, (uint8_t)hue);
+
+        if (json_get_int(buf, "saturation", &saturation))
+            ColorControl::Attributes::CurrentSaturation::Set(1, (uint8_t)saturation);
     }
-
-    if (json_get_int(buf, "color_temp", &color_temp))
-        ColorControl::Attributes::ColorTemperatureMireds::Set(1, (uint16_t)color_temp);
-
-    if (json_get_int(buf, "hue", &hue))
-        ColorControl::Attributes::CurrentHue::Set(1, (uint8_t)hue);
-
-    if (json_get_int(buf, "saturation", &saturation))
-        ColorControl::Attributes::CurrentSaturation::Set(1, (uint8_t)saturation);
 
     httpd_resp_set_type(req, "application/json");
     httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
